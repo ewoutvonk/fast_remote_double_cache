@@ -1,0 +1,70 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'fileutils'
+
+FILES = { "#{File.expand_path(File.join(File.dirname(__FILE__), '..', 'lib', 'capistrano', 'recipes', 'deploy', 'strategy', 'utilities', 'copy.rb'))}" => "bin" }
+
+def install
+  FILES.each do |source_file, target_dir|
+    target_file = File.join(target_dir, File.basename(source_file))
+    if !File.exists?(target_dir)
+      puts "[add] creating directory `#{target_dir}'"
+      Dir.mkdir(target_dir)
+    end
+    if File.exists?(target_file)
+      warn "[skip] `#{target_file}' already exists"
+    else
+      puts "[add] writing `#{target_file}'"
+      FileUtils.cp(source_file, target_file)
+    end
+  end
+end
+
+def uninstall
+  FILES.each do |source_file, target_dir|
+    target_file = File.join(target_dir, File.basename(source_file))
+    if !File.exists?(target_file)
+      warn "[skip] `#{target_file}' does not exist"
+    else
+      puts "[remove] deleting `#{target_file}'"
+      FileUtils.rm_f(target_file)
+    end
+  end
+end
+
+action=nil
+OptionParser.new do |opts|
+  opts.banner = "Usage: #{File.basename($0)} [options]"
+
+  opts.on("-i", "Install files") do
+    action = :install
+  end
+
+  opts.on("-c", "Uninstall files") do
+    action = :uninstall
+  end
+
+  opts.on("-h", "--help", "Displays this help info") do
+    puts opts
+    exit 0
+  end
+  
+  begin
+    opts.parse!(ARGV)
+  rescue OptionParser::ParseError => e
+    warn e.message
+    puts opts
+    exit 1
+  end
+end
+
+if action == :uninstall
+  uninstall
+elsif ARGV.empty? || action == :install
+  install
+else
+  abort "Incorrect arguments specified."
+end
+
+puts "[done] fast_remote_double_cache #{action}ed!"
