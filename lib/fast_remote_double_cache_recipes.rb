@@ -11,7 +11,8 @@ Capistrano::Configuration.instance(:must_exist).load do
 
   set :deploy_via, :fast_remote_cache
   set :scm, :indirect_git
-  
+  set(:prepare_checkout_path) { File.join(deploy_to, 'prepare_current') }
+    
   set :remote_repository, repository
   set(:repository) { File.join(deploy_to, 'mirror', application) }
   
