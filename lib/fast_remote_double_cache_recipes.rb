@@ -60,7 +60,7 @@ Capistrano::Configuration.instance(:must_exist).load do
       task :default do
         clone_and_checkout_git_repo
         top.fast_remote_cache.prepare
-        # tasks
+        # deploy_tasks
       end
       
       task :clone_and_checkout_git_repo do
@@ -74,7 +74,7 @@ Capistrano::Configuration.instance(:must_exist).load do
         EOF
       end
     
-      task :tasks do
+      task :deploy_tasks do
         run "bash -l -c '#{RVM_USE_CMD}cd #{repository} ; bundle install --path vendor/bundle --without development test'"
         run "cd #{repository} ; rake deploy:prepare RAILS_ENV=#{rails_env}"
       end
