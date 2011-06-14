@@ -60,7 +60,7 @@ Capistrano::Configuration.instance(:must_exist).load do
       task :default do
         clone_and_checkout_git_repo
         top.fast_remote_cache.prepare
-        tasks
+        # tasks
       end
       
       task :clone_and_checkout_git_repo do
