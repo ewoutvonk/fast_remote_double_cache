@@ -17,6 +17,5 @@ SPEC = Gem::Specification.new do |s|
   s.files = candidates.delete_if do |item| 
     item.include?("CVS") || item.include?("rdoc") 
   end
-  s.default_executable = "fast_remote_double_cache"
   s.executables = ["fast_remote_double_cache"]
 end
