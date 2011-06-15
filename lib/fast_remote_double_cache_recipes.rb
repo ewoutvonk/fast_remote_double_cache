@@ -21,6 +21,11 @@ Capistrano::Configuration.instance(:must_exist).load do
   set :fast_remote_double_cache_bundle_path, 'vendor/bundle'
   set :fast_remote_double_cache_without_groups, %w(development test)
   set :fast_remote_double_cache_rvm_use_cmd, ''
+  # this long line of shell code sets the correct architecture flags for bundling based on OS type and bits of the system
+  set :fast_remote_double_cache_arch_flags, <<-EOF
+  $(bits="$([ "`uname -s`" = 'Darwin' ] && echo $(ioreg -l -p IODeviceTree | grep firmware-abi | head -n 1 | cut -d '=' -f 2 | cut -d '"' -f 2 | sed 's/^EFI//') || echo $([ "`uname -m`" = "x86_64" ] && echo 64 || echo 32))" ; [ "`uname -s`" = "Darwin" ] && echo "ARCHFLAGS=\\"-arch $([ "${bits}" = "64" ] && echo "x64_64" || echo "i386")\\"" || echo "CFLAGS=\\"-m${bits}\\" LDFLAGS=\\"-m${bits}\\"")
+  
+  EOF
 
   namespace :fast_remote_cache do
 
@@ -77,7 +82,7 @@ Capistrano::Configuration.instance(:must_exist).load do
     
       task :deploy_tasks do
         if fast_remote_double_cache_use_bundler
-          run "bash -l -c '#{fast_remote_double_cache_rvm_use_cmd}cd #{repository} ; bundle install --path #{fast_remote_double_cache_bundle_path} --without #{fast_remote_double_cache_without_groups.join(' ')}'"
+          run "bash -l -c '#{fast_remote_double_cache_rvm_use_cmd}cd #{repository} ; #{fast_remote_double_cache_arch_flags} bundle install --path #{fast_remote_double_cache_bundle_path} --without #{fast_remote_double_cache_without_groups.join(' ')}'"
         end
         unless fast_remote_double_cache_skip_tasks
           vars = { :RAILS_ENV => rails_env }
