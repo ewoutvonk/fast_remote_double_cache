@@ -11,15 +11,16 @@ Capistrano::Configuration.instance(:must_exist).load do
 
   set :deploy_via, :fast_remote_cache
   set :scm, :indirect_git
-  set(:prepare_checkout_path) { File.join(deploy_to, 'prepare_current') }
-    
-  set :remote_repository, repository
+
+  # don't change this one, it's internal
+  set :fast_remote_double_cache_remote_repository, repository
   set(:repository) { File.join(deploy_to, 'mirror', application) }
   
   set :fast_remote_double_cache_skip_tasks, false
   set :fast_remote_double_cache_use_bundler, true
   set :fast_remote_double_cache_bundle_path, 'vendor/bundle'
-  set :fast_remote_double_cache_without_groups, 'development test'
+  set :fast_remote_double_cache_without_groups, %w(development test)
+  set :fast_remote_double_cache_rvm_use_cmd, ''
 
   namespace :fast_remote_cache do
 
@@ -60,12 +61,12 @@ Capistrano::Configuration.instance(:must_exist).load do
       task :default do
         clone_and_checkout_git_repo
         top.fast_remote_cache.prepare
-        # deploy_tasks
+        deploy_tasks
       end
       
       task :clone_and_checkout_git_repo do
         run <<-EOF
-          [ ! -d "#{repository}" ] && git clone #{remote_repository} #{repository} ;
+          [ ! -d "#{repository}" ] && git clone #{fast_remote_double_cache_remote_repository} #{repository} ;
           cd "#{repository}" ;
           git reset --hard ;
           git checkout #{branch} ;
@@ -75,8 +76,14 @@ Capistrano::Configuration.instance(:must_exist).load do
       end
     
       task :deploy_tasks do
-        run "bash -l -c '#{RVM_USE_CMD}cd #{repository} ; bundle install --path vendor/bundle --without development test'"
-        run "cd #{repository} ; rake deploy:prepare RAILS_ENV=#{rails_env}"
+        if fast_remote_double_cache_use_bundler
+          run "bash -l -c '#{fast_remote_double_cache_rvm_use_cmd}cd #{repository} ; bundle install --path #{fast_remote_double_cache_bundle_path} --without #{fast_remote_double_cache_without_groups.join(' ')}'"
+        end
+        unless fast_remote_double_cache_skip_tasks
+          vars = { :RAILS_ENV => rails_env }
+          vars[:STAGE] = stage if exists?(:stage)
+          run "bash -l -c '#{fast_remote_double_cache_rvm_use_cmd}cd #{repository} ; #{fast_remote_double_cache_use_bundler ? "bundle exec" : ""} rake deploy:prepare #{vars.collect { |k,v| "#{k}='#{v}'" }.join(' ')}'"
+        end
       end
 
       task :check_stamp do
@@ -97,6 +104,7 @@ Capistrano::Configuration.instance(:must_exist).load do
   end
 
   after "deploy:setup", "fast_remote_cache:setup"
+  before "deploy:prepare", "fast_remote_cache:setup" # make sure the 'copy' script is on the server
   if fetch(:rails_env, "production").to_s == "production"
     after "deploy:prepare", "deploy:prepare:stamp"
     before "deploy", "deploy:prepare:check_stamp"
