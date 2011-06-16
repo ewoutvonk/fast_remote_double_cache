@@ -73,6 +73,7 @@ Capistrano::Configuration.instance(:must_exist).load do
         run <<-EOF
           [ ! -d "#{repository}" ] && git clone #{fast_remote_double_cache_remote_repository} #{repository} ;
           cd "#{repository}" ;
+          git add -A ;
           git reset --hard ;
           git checkout #{branch} ;
           git pull --rebase ;
@@ -92,17 +93,20 @@ Capistrano::Configuration.instance(:must_exist).load do
       end
 
       task :check_stamp do
-        if !File.exists?('.deploy.prepare')
+        stamp_file = ".deploy.prepare#{exists?(:stage) ? ".#{stage}" : ""}"
+        if !File.exists?(stamp_file)
           abort "You have to run deploy:prepare first!"
         end
       end
       
       task :stamp do
-        system("touch .deploy.prepare")
+        stamp_file = ".deploy.prepare#{exists?(:stage) ? ".#{stage}" : ""}"
+        system("touch #{stamp_file}")
       end
 
       task :remove_stamp do
-        system("rm -f .deploy.prepare")
+        stamp_file = ".deploy.prepare#{exists?(:stage) ? ".#{stage}" : ""}"
+        system("rm -f #{stamp_file}")
       end
     
     end
