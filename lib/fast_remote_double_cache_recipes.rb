@@ -22,7 +22,9 @@ Capistrano::Configuration.instance(:must_exist).load do
   set :fast_remote_double_cache_without_groups, %w(development test)
   set :fast_remote_double_cache_rvm_use_cmd, ''
   # this long line of shell code sets the correct architecture flags for bundling based on OS type and bits of the system
-  set :fast_remote_double_cache_arch_flags, "echo $(bits=$([ `uname -s` = 'Darwin' ] && echo $(ioreg -l -p IODeviceTree | grep firmware-abi | head -n 1 | cut -d '=' -f 2 | cut -d '\"' -f 2 | sed 's/^EFI//') || echo $([ `uname -m` = 'x86_64' ] && echo 64 || echo 32)) ; [ `uname -s` = 'Darwin' ] && echo ARCHFLAGS=\"-arch $([ $bits = '64' ] && echo x64_64 || echo i386)\" || echo CFLAGS=-m${bits} LDFLAGS=-m${bits})"
+  set :fast_remote_double_cache_os, :linux # or :osx
+  set :fast_remote_double_cache_bits, 64
+  set(:fast_remote_double_cache_arch_flags) { fast_remote_double_cache_os == :osx ? "ARCHFLAGS='-arch #{fast_remote_double_cache_bits.to_i == 64 ? "x64_64" : "i386"}'" : "CFLAGS='-m#{fast_remote_double_cache_bits}' LDFLAGS='-m#{fast_remote_double_cache_bits})'" }
 
   namespace :fast_remote_cache do
 
