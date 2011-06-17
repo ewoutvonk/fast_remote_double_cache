@@ -24,7 +24,7 @@ Capistrano::Configuration.instance(:must_exist).load do
   # this long line of shell code sets the correct architecture flags for bundling based on OS type and bits of the system
   set :fast_remote_double_cache_os, :linux # or :osx
   set :fast_remote_double_cache_bits, 64
-  set(:fast_remote_double_cache_arch_flags) { fast_remote_double_cache_os == :osx ? "ARCHFLAGS='-arch #{fast_remote_double_cache_bits.to_i == 64 ? "x64_64" : "i386"}'" : "CFLAGS='-m#{fast_remote_double_cache_bits}' LDFLAGS='-m#{fast_remote_double_cache_bits})'" }
+  set(:fast_remote_double_cache_arch_flags) { fast_remote_double_cache_os == :osx ? "ARCHFLAGS='-arch #{fast_remote_double_cache_bits.to_i == 64 ? "x64_64" : "i386"}'" : "CFLAGS='-m#{fast_remote_double_cache_bits}' LDFLAGS='-m#{fast_remote_double_cache_bits}'" }
 
   namespace :fast_remote_cache do
 
